@@ -43,3 +43,6 @@ jobs:
           if not all(checks.values()):
             raise SystemExit('One or more required features are missing')
           PY
+
+      - name: Run parser regression tests
+        run: node tests/parser.test.cjs
