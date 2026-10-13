@@ -62,7 +62,6 @@ function splitPanels(raw){
   let body=raw.replace(/^\s*PAGE\s+\d{1,3}\s*(?:[:：—–·.-]\s*)?/i,'').trim();
   const declaredMatch=body.match(/\b(?:LAYOUT\s*:\s*)?(\d{1,2})\s+PANELS?\b/i);
   const declaredCount=declaredMatch?Number(declaredMatch[1]):0;
-  let body=raw.replace(/^\s*PAGE\s+\d+\s*(?:[:—–-]\s*)?/i,'').trim();
   /* Recognise numbered shot descriptions like "1 · Exterior wide Visual:" as well as PANEL 1 headings. */
   const markers=[];
   const re=/(?:^|\s)(?:PANEL|FRAME)\s*#?\s*(\d{1,2})\s*[:.)—–-]?\s*/gi;
