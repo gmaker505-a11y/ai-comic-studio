@@ -37,7 +37,7 @@ function splitScript(src){
   const text=String(src||'').replace(/\r/g,'').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').trim();
   if(!text)return [];
   const headings=[];
-  const headingRe=/\bPAGE\s+(\d{1,3})\s*:\s*/gi;
+  const headingRe=/\bPAGE\s+(\d{1,3})\s*:\s*/g;
   let match;
   while((match=headingRe.exec(text))!==null) headings.push({at:match.index,bodyAt:headingRe.lastIndex,number:Number(match[1])});
   if(!headings.length){
@@ -65,7 +65,7 @@ function splitScript(src){
        Only a number + separator + capitalised shot label is required. */
     const body=raw.replace(/^\s*(?:"[^"]+"|“[^”]+”)\s*/,'');
     const markers=[];
-    const panelRe=/(?:^|\s)(\d{1,2})\s*[·.)]\s+(?=[A-Z])/g;
+    const panelRe=/(?:^|\s)(\d{1,2})\s*·\s+(?=[A-Z])/g;
     while((match=panelRe.exec(body))!==null){
       const at=match.index+match[0].search(/\d/);
       const n=Number(match[1]);
