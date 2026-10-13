@@ -2,6 +2,10 @@
 
 A mobile-friendly, script-first comic-production workspace. The app is tuned against **Strong Bros. Issue 1 — The Power Was Never Off** (22 comic pages, 115 panels).
 
+## Original graphic novel preview
+
+Read **Last Stop at Dawn — Issue 01: The Envelope**, a new four-page urban mystery with original vector comic art and mobile page navigation: https://gmaker505-a11y.github.io/ai-comic-studio/graphic-novel/ . The companion production script is at `graphic-novel/story.md` and can be uploaded into the storyboard workspace to expand the issue.
+
 ## Current features
 
 - Responsive mobile interface.
