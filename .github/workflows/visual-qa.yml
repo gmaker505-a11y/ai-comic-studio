@@ -28,7 +28,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
       - name: Install dependencies
         run: npm install
       - name: Install Chromium
@@ -57,7 +56,7 @@ jobs:
           import re
           for path in ['index.html', 'graphic-novel/index.html']:
               html = open(path, encoding='utf-8').read()
-              scripts = re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>', html, re.I)
+              scripts = re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>', html, re.I)
               inline = [s for s in scripts if s.strip()]
               if not inline:
                   raise SystemExit('No inline application script found in ' + path)
