@@ -34,7 +34,7 @@ function splitScript(src){
 /* Parse both structured scripts and PDF-extracted text. PDF text often arrives as one long line, so do not rely on line starts. */
 const text=src.replace(/\r/g,'').replace(/\u00a0/g,' ').trim();
 if(!text)return [];
-const pageMarker=/\bPAGE\s+(\d{1,2})(?=\s*(?:[:—–-]|["“]|—|$))/gi;
+const pageMarker=/\bPAGE\s+(\d{1,3})(?!\d)(?=\s*(?:[:：—–·.-]|["“]|[A-Z]))/gi;
 const pageMatches=[...text.matchAll(pageMarker)];
 let chunks=[];
 if(pageMatches.length){
@@ -59,12 +59,15 @@ function pageTitle(raw,n){
   return 'Page '+n+(title&&title.toLowerCase()!=='page '+n?' — '+title:'');
 }
 function splitPanels(raw){
+  let body=raw.replace(/^\s*PAGE\s+\d{1,3}\s*(?:[:：—–·.-]\s*)?/i,'').trim();
+  const declaredMatch=body.match(/\b(?:LAYOUT\s*:\s*)?(\d{1,2})\s+PANELS?\b/i);
+  const declaredCount=declaredMatch?Number(declaredMatch[1]):0;
   let body=raw.replace(/^\s*PAGE\s+\d+\s*(?:[:—–-]\s*)?/i,'').trim();
   /* Recognise numbered shot descriptions like "1 · Exterior wide Visual:" as well as PANEL 1 headings. */
   const markers=[];
   const re=/(?:^|\s)(?:PANEL|FRAME)\s*#?\s*(\d{1,2})\s*[:.)—–-]?\s*/gi;
   let m;while((m=re.exec(body))!==null)markers.push({at:m.index+m[0].search(/(?:PANEL|FRAME)/i),end:re.lastIndex,label:'Panel '+m[1]});
-  const shot=/(?:^|\s)(\d{1,2})\s*[·.)]\s+(?=[A-Z][^.!?]{0,90}\b(?:Visual|Visual:|Exterior|Interior|Close|Medium|Wide|Low angle|Over-the-shoulder|Extreme)\b)/g;
+  const shot=/(?:^|\s)(\d{1,2})\s*[·.)]\s+(?=[A-Z][^\n]{0,140}?(?:\bVisual\s*:|\bDialogue\s*:|\bCaption\s*:|\bSFX\s*:|\b(?:Exterior|Interior|Close-up|Close|Medium|Wide|Low angle|Over-the-shoulder|Extreme wide|Establishing shot)\b))/g;
   while((m=shot.exec(body))!==null)markers.push({at:m.index+m[0].search(/\d/),end:shot.lastIndex,label:'Panel '+m[1]});
   markers.sort((a,b)=>a.at-b.at);
   const unique=markers.filter((x,i)=>i===0||x.at!==markers[i-1].at);
