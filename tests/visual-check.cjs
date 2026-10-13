@@ -67,7 +67,7 @@ const checkOverflow = async (page, label) => {
       'PAGE 2: "The Decision"',
       'Layout: 1 panel.',
       '1 · Wide Visual: Mara opens the envelope under a streetlight. Letters: MARA: "I need to know."'
-    ].join('\\n');
+    ].join(String.fromCharCode(10));
     await workflowPage.locator('#scriptFile').setInputFiles({
       name: 'panelforge-smoke-test.txt',
       mimeType: 'text/plain',
@@ -86,7 +86,7 @@ const checkOverflow = async (page, label) => {
     const downloadPromise = workflowPage.waitForEvent('download');
     await workflowPage.getByRole('button', { name: /Export storyboard JSON/i }).click();
     const download = await downloadPromise;
-    record('Storyboard JSON export starts', /\\.json$/i.test(download.suggestedFilename()), download.suggestedFilename());
+    record('Storyboard JSON export starts', download.suggestedFilename().toLowerCase().endsWith('.json'), download.suggestedFilename());
     await workflowContext.close();
 
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
