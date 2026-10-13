@@ -55,7 +55,9 @@ function splitScript(src){
     let raw=text.slice(h.bodyAt,stop).trim();
     /* Remove PDF print headers/footers and the repeated book title. */
     raw=raw.replace(/(?:Strong Bros\. Issue 1 — The Power Was Never Off)\s*/gi,' ');
-    raw=raw.replace(/\bPage\s+\d+\s+of\s+\d+\b/gi,' ').trim();
+    raw=raw.replace(/\bPage\s+\d+\s+of\s+\d+\b/gi,' ');
+    /* The source PDF adds production/decoding notes after the final comic page. */
+    raw=raw.split(/\bCreator'?s Notes\b/i)[0].trim();
     const titleMatch=raw.match(/^\s*(?:"([^"]{1,100})"|“([^”]{1,100})”)/);
     const pageTitle='Page '+h.number+(titleMatch?' — '+(titleMatch[1]||titleMatch[2]):'');
     const layoutMatch=raw.match(/\b(?:Layout\s*:\s*)?(\d{1,2})\s+panels?\b/i);
