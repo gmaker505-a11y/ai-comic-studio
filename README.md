@@ -1,41 +1,41 @@
 # PanelForge — AI Comic Studio
 
-A mobile-friendly comic-production workspace built as a standalone web app. Designed for script-first workflows such as **Strong Bros. Issue 1 — The Power Was Never Off**.
+A mobile-friendly, script-first comic-production workspace. The app is tuned against **Strong Bros. Issue 1 — The Power Was Never Off** (22 comic pages, 115 panels).
 
-## Current MVP
+## Current features
 
-- Responsive phone-friendly interface.
-- Load a script from TXT, Markdown, or PDF (PDF text extraction uses PDF.js from a CDN).
-- Upload and preview multiple character reference images.
-- Configure art-direction and character-continuity notes.
-- Split scripts into editable pages and panels using PAGE/PANEL headings, then review and edit each panel.
-- Add/remove pages and panels.
-- Export a JSON storyboard or full project backup including reference images.
-- Print the storyboard and use the browser's **Save as PDF** option.
+- Responsive mobile interface.
+- Upload TXT, Markdown, or PDF scripts; PDF text is read with PDF.js.
+- **Automatically builds the storyboard after file upload**, including comic page headings, numbered panel headings, and declared panel counts.
+- Reports page/panel totals and flags declared/detected panel-count mismatches.
+- Edit page titles, panel text, dialogue, and panel order by adding/removing panels.
+- Upload character reference images and keep a character-continuity brief with the project.
+- Generate an image prompt for a panel or export a prompt pack for the full storyboard.
+- Attach panel artwork images and display parsed speech, caption, and sound-effect lettering over the art.
+- Print with one comic page per A4 sheet, panel grids, and overlaid lettering. Use the browser print dialog's **Save as PDF** option.
+- Export the storyboard as JSON, download a full project backup, or import a previous backup.
+- Automatically save/restore projects on the same browser/device using IndexedDB where supported.
+- GitHub Actions checks JavaScript syntax, core features, and regression tests for the 22-page / 115-panel parsing case and dialogue lettering.
 
-## Open it
+## Open the app
 
-The app is a static site. Open [index.html](./index.html) locally in a browser, or deploy the repository with GitHub Pages:
+Live site: https://gmaker505-a11y.github.io/ai-comic-studio/
 
-1. Open repository **Settings → Pages**.
-2. Under Build and deployment, select **Deploy from a branch**.
-3. Select branch **main**, folder **/(root)**, and save.
-4. Wait for GitHub Pages to publish the site; the URL appears in the Pages settings.
+If the latest change does not appear, refresh the page or reopen the site after GitHub Pages finishes publishing the commit.
 
-## Important limitations
+## Current limitations — important
 
-This is the first starter milestone. It **does not generate AI artwork yet**. The image-generation connection and secure server-side API handling are planned next. Do not place secret API keys in browser code or commit them to GitHub. Some PDF/browser features depend on loading PDF.js from its CDN.
+- **Automatic AI illustration generation is not connected yet.** You can attach artwork created elsewhere and export prompts for all panels, but the site does not yet generate 115 images by itself.
+- A secure image-generation service still needs to be connected. Keep provider API keys on a server-side service or secret store; never add private keys to this public repository or browser JavaScript.
+- The app overlays dialogue, captions, and sound effects it can identify in the script. Review the lettering because unusual formatting, nested quotes, or long dialogue may need manual adjustment.
+- PDF text extraction depends on the PDF.js CDN being reachable. Scanned/image-only PDFs need OCR; this version does not perform OCR.
+- Browser print engines differ. Review the PDF before distribution, especially pages with unusually long dialogue or large images.
+- The parser is tuned for numbered comic-production scripts. It reports count mismatches, but scripts with different heading conventions still need review. Keep the original PDF as the canonical source.
 
-The current storyboard splitter is heuristic: inspect the generated pages/panels and correct the split before export. It does not guarantee perfect parsing of every screenplay or comic-production script. Keep the original source file as the canonical script.
+## GitHub validation
 
-## Roadmap
+The workflow in `.github/workflows/validate.yml` checks the embedded JavaScript and runs `tests/parser.test.cjs` on pushes and pull requests to `main`.
 
-1. Script parsing tuned for panel-based comic scripts and source dialogue preservation.
-2. Character bible and reference-image management.
-3. Secure server-side image generation provider adapter, progress tracking, retries, and cost controls.
-4. Generated panel review, continuity checks, and deterministic speech-bubble lettering.
-5. Full-page composition and high-resolution PDF/CBZ export.
+## Privacy and project storage
 
-## Privacy
-
-Reference images and scripts are processed in the browser by this starter app and included in a project backup only when you choose to download it. Avoid using public hosting for sensitive materials. Once a server-side AI provider is added, its own data handling and retention rules will apply.
+Scripts, reference images, and attached artwork are handled in the browser. IndexedDB autosave is local to that browser/device and may be cleared by browser settings. Use **Download project backup** for a portable copy. Public GitHub Pages is not a private workspace; avoid publishing confidential scripts or reference material in the repository.
