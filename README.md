@@ -8,7 +8,7 @@ A mobile-friendly, script-first comic-production workspace. The app is tuned aga
 - Upload TXT, Markdown, or PDF scripts; PDF text is read with PDF.js.
 - **Automatically builds the storyboard after file upload**, including comic page headings, numbered panel headings, and declared panel counts.
 - Reports page/panel totals and flags declared/detected panel-count mismatches.
-- Edit page titles, panel text, dialogue, and panel order by adding/removing panels.
+- Edit page titles and panel text; add, remove, reorder, and delete pages or panels; remove or replace attached artwork.
 - Upload character reference images and keep a character-continuity brief with the project.
 - Generate an image prompt for a panel or export a prompt pack for the full storyboard.
 - Attach panel artwork images and display parsed speech, caption, and sound-effect lettering over the art.
