@@ -26,6 +26,8 @@ jobs:
           print('Found', len(inline), 'inline application script(s)')
           PY
           node --check /tmp/panelforge-app.js
+      - name: Check secure backend JavaScript syntax
+        run: node --input-type=module --check < functions/api/generate.js
       - name: Check required app features
         run: |
           python3 - <<'PY'
