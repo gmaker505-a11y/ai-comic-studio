@@ -30,10 +30,66 @@ $('clearScript').onclick=()=>{$('scriptText').value='';$('scriptFile').value='';
 $('refFiles').addEventListener('change',async e=>{for(const f of e.target.files){if(!f.type.startsWith('image/'))continue;refs.push({name:f.name,url:await fileData(f)});}renderRefs();$('s2').classList.add('done');say(refs.length+' reference image(s) added.');e.target.value='';});
 function fileData(f){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f);});}
 function renderRefs(){$('refs').innerHTML='';refs.forEach((r,i)=>{const d=document.createElement('div');d.className='ref';const im=document.createElement('img');im.src=r.url;im.alt=r.name;const sm=document.createElement('small');sm.textContent=r.name;const b=document.createElement('button');b.className='secondary delete';b.textContent='Remove';b.style.marginTop='6px';b.onclick=()=>{refs.splice(i,1);renderRefs();};d.append(im,sm,b);$('refs').append(d);});}
-function splitScript(src){const lines=src.replace(/\r/g,'').split('\n');let out=[],current={title:'Page 1',panels:[]},buffer=[];const pageRe=/^\s*(?:#{1,4}\s*)?(?:PAGE|PAGE NO\.?|PAGE NUMBER)\s*[-:#]?\s*(\d+)?\s*(.*)$/i;const panelRe=/^\s*(?:#{1,5}\s*)?(?:PANEL|FRAME)\s*[-:#]?\s*(\d+)?\s*[:.)-]?\s*(.*)$/i;function flushPanel(){const t=buffer.join('\n').trim();if(t){current.panels.push({text:t});buffer=[];}}function flushPage(){flushPanel();if(current.panels.length)out.push(current);current={title:'Page '+(out.length+1),panels:[]};}
-for(const line of lines){const pm=line.match(pageRe);if(pm){flushPage();current.title='Page '+(pm[1]||out.length+1)+(pm[2]?' — '+pm[2].trim():'');continue;}const pn=line.match(panelRe);if(pn){flushPanel();if(pn[3])buffer.push(pn[3]);continue;}buffer.push(line);}flushPage();
-if(!out.length){const blocks=src.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);out=[{title:'Page 1',panels:blocks.map(text=>({text}))}];}
-return out;}
+function splitScript(src){
+/* Parse both structured scripts and PDF-extracted text. PDF text often arrives as one long line, so do not rely on line starts. */
+const text=src.replace(/\r/g,'').replace(/\u00a0/g,' ').trim();
+if(!text)return [];
+const pageMarker=/\bPAGE\s+(\d{1,2})(?=\s*(?:[:—–-]|["“]|—|$))/gi;
+const pageMatches=[...text.matchAll(pageMarker)];
+let chunks=[];
+if(pageMatches.length){
+  for(let i=0;i<pageMatches.length;i++){
+    const m=pageMatches[i], startAt=m.index, endAt=i+1<pageMatches.length?pageMatches[i+1].index:text.length;
+    const raw=text.slice(startAt,endAt).trim();
+    /* Ignore page-number footers such as "Page 4 of 14". */
+    if(/^\s*PAGE\s+\d+\s+OF\s+\d+/i.test(raw.slice(0,35)))continue;
+    chunks.push({number:Number(m[1]),raw});
+  }
+}
+if(!chunks.length){
+  const linePage=/^\s*(?:#{1,4}\s*)?(?:PAGE|PAGE NO\.?|PAGE NUMBER)\s*[-:#]?\s*(\d+)?\s*(.*)$/i;
+  const lines=text.split('\n');let current={number:1,raw:''};
+  for(const line of lines){const m=line.match(linePage);if(m){if(current.raw.trim())chunks.push(current);current={number:Number(m[1]||chunks.length+1),raw:line};}else current.raw+=(current.raw?'\n':'')+line;}
+  if(current.raw.trim())chunks.push(current);
+}
+function pageTitle(raw,n){
+  const m=raw.match(/^\s*PAGE\s+\d+\s*(?:[:—–-]\s*)?(["“][^"”]{1,90}["”]|[^.\n]{1,65}?)(?:\s+LAYOUT:|\s+PALETTE:|\s+\d+\s+PANELS?\b|$)/i);
+  let title=m&&m[1]?m[1].replace(/^["“]|["”]$/g,'').trim():'';
+  title=title.replace(/^(?:—|:)+\s*/,'').trim();
+  return 'Page '+n+(title&&title.toLowerCase()!=='page '+n?' — '+title:'');
+}
+function splitPanels(raw){
+  let body=raw.replace(/^\s*PAGE\s+\d+\s*(?:[:—–-]\s*)?/i,'').trim();
+  /* Recognise numbered shot descriptions like "1 · Exterior wide Visual:" as well as PANEL 1 headings. */
+  const markers=[];
+  const re=/(?:^|\s)(?:PANEL|FRAME)\s*#?\s*(\d{1,2})\s*[:.)—–-]?\s*/gi;
+  let m;while((m=re.exec(body))!==null)markers.push({at:m.index+m[0].search(/(?:PANEL|FRAME)/i),end:re.lastIndex,label:'Panel '+m[1]});
+  const shot=/(?:^|\s)(\d{1,2})\s*[·.)]\s+(?=[A-Z][^.!?]{0,90}\b(?:Visual|Visual:|Exterior|Interior|Close|Medium|Wide|Low angle|Over-the-shoulder|Extreme)\b)/g;
+  while((m=shot.exec(body))!==null)markers.push({at:m.index+m[0].search(/\d/),end:shot.lastIndex,label:'Panel '+m[1]});
+  markers.sort((a,b)=>a.at-b.at);
+  const unique=markers.filter((x,i)=>i===0||x.at!==markers[i-1].at);
+  if(unique.length){
+    const prefix=body.slice(0,unique[0].at).trim(), result=[];
+    if(prefix && !/^LAYOUT:|^PALETTE:/i.test(prefix))result.push({text:prefix});
+    unique.forEach((x,i)=>{const stop=i+1<unique.length?unique[i+1].at:body.length;let val=body.slice(x.at,stop).trim();val=val.replace(/^(?:PANEL|FRAME)\s*#?\s*\d{1,2}\s*[:.)—–-]?\s*/i,'');val=val.replace(/^\d{1,2}\s*[·.)]\s*/,'');if(val)result.push({text:val});});
+    return result;
+  }
+  /* If there are no panel labels, preserve paragraph boundaries instead of inventing panel splits. */
+  return body.split(/\n\s*\n+/).map(x=>x.trim()).filter(x=>x&&!/^LAYOUT:|^PALETTE:/i.test(x)).map(text=>({text}));
+}
+const result=[];
+for(const c of chunks){
+  const raw=c.raw;
+  const title=pageTitle(raw,c.number||result.length+1);
+  const panels=splitPanels(raw);
+  if(panels.length)result.push({title,panels});
+}
+if(!result.length){
+  const blocks=text.split(/\n\s*\n+/).map(x=>x.trim()).filter(Boolean);
+  return [{title:'Page 1',panels:blocks.map(text=>({text}))}];
+}
+return result;
+}
 $('parse').onclick=()=>{const t=$('scriptText').value.trim();if(!t){say('Please upload or paste your script first.');return;}pages=splitScript(t);if(!pages.length)pages=[{title:'Page 1',panels:[{text:t}]}];renderBoard();['s1','s2','s3'].forEach(x=>$(x).classList.add('done'));$('s3').classList.add('active');say('Storyboard created. Check page and panel splits, then edit any panel.');};
 function renderBoard(){const root=$('storyboard');root.innerHTML='';pages.forEach((p,pi)=>{const wrap=document.createElement('article');wrap.className='page';const head=document.createElement('div');head.className='pagehead';const title=document.createElement('strong');title.textContent=p.title;const rename=document.createElement('button');rename.className='secondary';rename.textContent='Rename';rename.onclick=()=>{const n=prompt('Page title',p.title);if(n){p.title=n;renderBoard();}};head.append(title,rename);wrap.append(head);const panels=document.createElement('div');panels.className='panels';p.panels.forEach((pa,qi)=>{const card=document.createElement('div');card.className='panelcard';const num=document.createElement('div');num.className='num';num.textContent='PAGE '+(pi+1)+' · PANEL '+(qi+1);const ta=document.createElement('textarea');ta.value=pa.text;ta.setAttribute('aria-label',num.textContent+' description and dialogue');ta.oninput=()=>pa.text=ta.value;const del=document.createElement('button');del.className='secondary delete';del.textContent='Remove panel';del.style.marginTop='7px';del.onclick=()=>{p.panels.splice(qi,1);renderBoard();};card.append(num,ta,del);panels.append(card);});const add=document.createElement('button');add.className='secondary';add.textContent='+ Add panel';add.style.marginTop='10px';add.onclick=()=>{p.panels.push({text:''});renderBoard();};wrap.append(panels,add);root.append(wrap);});$('panelCount').textContent=pages.reduce((n,p)=>n+p.panels.length,0)+' panels';$('pageStat').textContent=pages.length+' pages';$('s4').classList.add('done');}
 $('addPage').onclick=()=>{pages.push({title:'Page '+(pages.length+1),panels:[{text:''}]});renderBoard();say('New page added.');};
