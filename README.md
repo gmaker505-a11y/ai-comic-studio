@@ -59,3 +59,8 @@ The workflow in `.github/workflows/validate.yml` checks the embedded JavaScript 
 ## Privacy and project storage
 
 Scripts, reference images, and attached artwork are handled in the browser. IndexedDB autosave is local to that browser/device and may be cleared by browser settings. Use **Download project backup** for a portable copy. Public GitHub Pages is not a private workspace; avoid publishing confidential scripts or reference material in the repository.
+
+
+## Visual screenshot testing
+
+Responsive browser screenshot tests run automatically through GitHub Actions. See [`docs/VISUAL_QA.md`](docs/VISUAL_QA.md) for how to download mobile/tablet/desktop screenshots, read failures, and repeat the fix-and-test cycle.
