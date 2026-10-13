@@ -26,12 +26,27 @@ If the latest change does not appear, refresh the page or reopen the site after 
 
 ## Current limitations — important
 
-- **Automatic AI illustration generation is not connected yet.** You can attach artwork created elsewhere and export prompts for all panels, but the site does not yet generate 115 images by itself. CBZ export requires artwork for every panel and currently blocks export when any panel is missing art.
+- **The generation backend is scaffolded but not deployed.** Once the Cloudflare Pages Function is deployed and configured with server-side secrets, the app can request images sequentially for every panel, use uploaded character-reference sheets, resume after partial completion, and stop after the current image. CBZ export requires artwork for every panel and blocks export when any panel is missing art.
 - A secure image-generation service still needs to be connected. Keep provider API keys on a server-side service or secret store; never add private keys to this public repository or browser JavaScript.
 - The app overlays dialogue, captions, and sound effects it can identify in the script. Review the lettering because unusual formatting, nested quotes, or long dialogue may need manual adjustment.
 - PDF text extraction depends on the PDF.js CDN being reachable. Scanned/image-only PDFs need OCR; this version does not perform OCR.
 - Browser print engines differ. Review the PDF before distribution, especially pages with unusually long dialogue or large images.
 - The parser is tuned for numbered comic-production scripts. It reports count mismatches, but scripts with different heading conventions still need review. Keep the original PDF as the canonical source.
+
+## Enable automatic AI artwork generation
+
+The public GitHub Pages site cannot safely hold an image-provider API key. A secure backend is included at `functions/api/generate.js`, intended for Cloudflare Pages Functions. It supports the OpenAI image API, optional character-reference images, an access-code gate, input limits, and an origin allowlist.
+
+1. Deploy this repository as a Cloudflare Pages project with no build command and the repository root as the static output directory so the `functions/` directory is deployed.
+2. In the Pages project's **Settings → Variables and Secrets**, add these server-side values:
+   - `OPENAI_API_KEY` — secret API key for image generation.
+   - `PANELFORGE_ACCESS_CODE` — a long, unique access code that you choose; keep it private.
+   - `APP_ORIGIN` — `https://gmaker505-a11y.github.io` (the frontend origin; no repository path).
+   - Optional `IMAGE_MODEL` — defaults to `gpt-image-1`.
+3. Redeploy, then copy the function URL (usually `https://YOUR-PROJECT.pages.dev/api/generate`).
+4. In PanelForge, enter that URL and the access code, select quality, then tap **Generate missing panel artwork**. The app asks for confirmation before making paid requests and generates one panel at a time.
+
+The function is only a scaffold until deployed and configured. GitHub Pages does not run this server-side function. Image generation incurs provider charges; review current pricing before starting a large batch. Reference images are sent to the configured provider when generation is requested.
 
 ## GitHub validation
 
