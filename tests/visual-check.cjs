@@ -52,6 +52,43 @@ const checkOverflow = async (page, label) => {
       await context.close();
     }
 
+    // Exercise the core script-to-storyboard workflow, not just the landing screen.
+    const workflowContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+    const workflowPage = await workflowContext.newPage();
+    workflowPage.on('pageerror', error => browserErrors.push('storyboard workflow page error: ' + error.message));
+    const workflowResponse = await workflowPage.goto(base + '/', { waitUntil: 'networkidle', timeout: 45000 });
+    record('Storyboard workflow page loads', !!workflowResponse && workflowResponse.status() < 400);
+    const fixture = [
+      'PAGE 1: "The Discovery"',
+      'Layout: 2 panels.',
+      '1 · Medium Visual: Mara finds a sealed envelope. Letters: MARA: "What is this?"',
+      '2 · Medium Visual: She looks toward the empty bus stop. Letters: MARA: "Someone left it here."',
+      '',
+      'PAGE 2: "The Decision"',
+      'Layout: 1 panel.',
+      '1 · Wide Visual: Mara opens the envelope under a streetlight. Letters: MARA: "I need to know."'
+    ].join('\\n');
+    await workflowPage.locator('#scriptFile').setInputFiles({
+      name: 'panelforge-smoke-test.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from(fixture, 'utf8')
+    });
+    await workflowPage.getByText(/Script loaded and storyboard built automatically/i).waitFor({ timeout: 10000 });
+    record('Uploading a text script automatically builds storyboard', await workflowPage.locator('.page').count() === 2);
+    record('Uploaded script creates all three panels', await workflowPage.locator('.panelcard').count() === 3,
+      await workflowPage.locator('#panelCount').innerText());
+    record('Page and panel totals update', (await workflowPage.locator('#pageStat').innerText()).includes('2') &&
+      (await workflowPage.locator('#panelCount').innerText()).includes('3'));
+    record('Dialogue and descriptions appear in editable panel fields',
+      (await workflowPage.locator('.panelcard textarea').first().inputValue()).includes('Mara finds a sealed envelope'));
+    await workflowPage.screenshot({ path: path.join(shots, 'storyboard-mobile-populated.png'), fullPage: true, animations: 'disabled' });
+    await checkOverflow(workflowPage, 'mobile populated storyboard');
+    const downloadPromise = workflowPage.waitForEvent('download');
+    await workflowPage.getByRole('button', { name: /Export storyboard JSON/i }).click();
+    const download = await downloadPromise;
+    record('Storyboard JSON export starts', /\\.json$/i.test(download.suggestedFilename()), download.suggestedFilename());
+    await workflowContext.close();
+
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
     const comic = await context.newPage();
     comic.on('pageerror', error => browserErrors.push('comic page error: ' + error.message));
