@@ -1,0 +1,82 @@
+name: Build, Screenshot and Visual QA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "23 8 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-qa:
+    name: Browser tests and screenshot evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build static site and start local preview
+        run: |
+          mkdir -p artifacts/screenshots
+          python3 -m http.server 4173 --directory . > /tmp/panelforge-http.log 2>&1 &
+          echo $! > /tmp/panelforge-http.pid
+          for i in $(seq 1 40); do
+            if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then
+              echo "Static preview ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/panelforge-http.log
+          exit 1
+      - name: Test and screenshot desktop and mobile
+        id: visual
+        continue-on-error: true
+        run: npm run test:visual
+      - name: Run existing source validation
+        run: |
+          python3 - <<'PY'
+          import re
+          for path in ['index.html', 'graphic-novel/index.html']:
+              html = open(path, encoding='utf-8').read()
+              scripts = re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>', html, re.I)
+              inline = [s for s in scripts if s.strip()]
+              if not inline:
+                  raise SystemExit('No inline application script found in ' + path)
+              open('/tmp/' + path.replace('/', '-') + '.js', 'w', encoding='utf-8').write(inline[-1])
+              print('Found', len(inline), 'inline script(s) in', path)
+          PY
+          node --check /tmp/index.html.js
+          node --check /tmp/graphic-novel-index.html.js
+          node --input-type=module --check < functions/api/generate.js
+      - name: Upload screenshots, reports and browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: panelforge-visual-qa-${{ github.run_number }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Fail workflow if visual tests found a problem
+        if: steps.visual.outcome == 'failure'
+        run: |
+          echo "Visual QA found issues. Download the panelforge-visual-qa artifact for screenshots and diagnostics."
+          exit 1
