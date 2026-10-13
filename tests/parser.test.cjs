@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const html = fs.readFileSync('index.html', 'utf8');
-const scripts = [...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)]
+const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
   .map(match => match[1]).filter(script => script.trim());
 assert.ok(scripts.length, 'Application script must exist');
 const app = scripts.at(-1);
@@ -18,9 +18,9 @@ const counts = Array.from({length:22}, (_, i) => i < 4 ? 6 : i === 18 ? 6 : 5);
 const fixture = counts.map((count, index) => {
   const panels = Array.from({length:count}, (_, j) =>
     (j + 1) + ' · Medium Visual: Scene ' + (j + 1) + '. Letters: BILLY: "Test dialogue."'
-  ).join('\\n');
-  return 'PAGE ' + (index + 1) + ': "Test Page ' + (index + 1) + '"\\nLayout: ' + count + ' panels.\\n' + panels;
-}).join('\\n\\n');
+  ).join('\n');
+  return 'PAGE ' + (index + 1) + ': "Test Page ' + (index + 1) + '"\nLayout: ' + count + ' panels.\n' + panels;
+}).join('\n\n');
 const pages = splitScript(fixture);
 assert.equal(pages.length, 22, 'Must detect all 22 comic pages');
 assert.equal(pages.reduce((sum, page) => sum + page.panels.length, 0), 115, 'Must detect all 115 panels');
