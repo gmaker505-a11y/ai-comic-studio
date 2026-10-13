@@ -30,6 +30,7 @@ jobs:
         run: |
           python3 - <<'PY'
           html = open('index.html', encoding='utf-8').read()
+          backend = open('functions/api/generate.js', encoding='utf-8').read()
           checks = {
             'PDF.js script loading': 'pdfjsLib.getDocument' in html,
             'Comic PAGE heading parser': 'const headingRe=' in html,
@@ -41,6 +42,10 @@ jobs:
             'CBZ comic assembly': 'function composePageBlob(page,index)' in html,
             'Local project restore': 'function restoreAutosave()' in html,
             'Dialogue overlay': 'makeLettering(pa.text)' in html,
+            'Batch generation UI': "generateMissing').onclick" in html,
+            'Secure backend API key handling': 'env.OPENAI_API_KEY' in backend,
+            'Backend access-code gate': 'env.PANELFORGE_ACCESS_CODE' in backend,
+            'Reference image forwarding': 'referenceImages:refs.map' in html,
           }
           for name, ok in checks.items():
             print(('PASS' if ok else 'FAIL') + ': ' + name)
