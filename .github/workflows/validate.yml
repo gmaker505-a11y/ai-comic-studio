@@ -37,6 +37,10 @@ jobs:
             'Artwork attachment': 'pa.artwork=await fileData(file)' in html,
             'Print-to-PDF action': 'window.print()' in html,
             'Storyboard JSON export': 'JSON.stringify(data(),null,2)' in html,
+            'Automatic storyboard build after upload': 'PDF read and storyboard built automatically.' in html,
+            'CBZ comic assembly': 'function composePageBlob(page,index)' in html,
+            'Local project restore': 'function restoreAutosave()' in html,
+            'Dialogue overlay': 'makeLettering(pa.text)' in html,
           }
           for name, ok in checks.items():
             print(('PASS' if ok else 'FAIL') + ': ' + name)
