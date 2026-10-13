@@ -13,6 +13,7 @@ A mobile-friendly, script-first comic-production workspace. The app is tuned aga
 - Generate an image prompt for a panel or export a prompt pack for the full storyboard.
 - Attach panel artwork images and display parsed speech, caption, and sound-effect lettering over the art.
 - Print with one comic page per A4 sheet, panel grids, and overlaid lettering. Use the browser print dialog's **Save as PDF** option.
+- Export an illustrated **CBZ** archive (PNG page images plus ComicInfo metadata) after every panel has artwork attached.
 - Export the storyboard as JSON, download a full project backup, or import a previous backup.
 - Automatically save/restore projects on the same browser/device using IndexedDB where supported.
 - GitHub Actions checks JavaScript syntax, core features, and regression tests for the 22-page / 115-panel parsing case and dialogue lettering.
@@ -25,7 +26,7 @@ If the latest change does not appear, refresh the page or reopen the site after 
 
 ## Current limitations — important
 
-- **Automatic AI illustration generation is not connected yet.** You can attach artwork created elsewhere and export prompts for all panels, but the site does not yet generate 115 images by itself.
+- **Automatic AI illustration generation is not connected yet.** You can attach artwork created elsewhere and export prompts for all panels, but the site does not yet generate 115 images by itself. CBZ export requires artwork for every panel and currently blocks export when any panel is missing art.
 - A secure image-generation service still needs to be connected. Keep provider API keys on a server-side service or secret store; never add private keys to this public repository or browser JavaScript.
 - The app overlays dialogue, captions, and sound effects it can identify in the script. Review the lettering because unusual formatting, nested quotes, or long dialogue may need manual adjustment.
 - PDF text extraction depends on the PDF.js CDN being reachable. Scanned/image-only PDFs need OCR; this version does not perform OCR.
